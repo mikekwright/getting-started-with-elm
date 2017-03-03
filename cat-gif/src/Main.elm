@@ -4,6 +4,7 @@ import Html.Events exposing (..)
 import Http
 import Json.Decode as Decode
 
+
 main = 
     Html.program
         { init = init
@@ -25,13 +26,31 @@ init =
 
 -- UPDATE
 
-type Msg = MorePlease
+type Msg 
+    = MorePlease
+    | NewGif (Result Http.Error String)
 
 update : Msg -> Model -> (Model, Cmd Msg)
 update msg model =
     case msg of
         MorePlease ->
-            (model, Cmd.none)
+            (model, getRandomGif model.topic)
+        NewGif (Ok newUrl) ->
+            ( { model | gifUrl = newUrl }, Cmd.none)
+        NewGif (Err _) ->
+            ( model, Cmd.none ) 
+
+getRandomGif : String -> Cmd Msg
+getRandomGif topic = 
+    let
+        url = "https://api.giphy.com/v1/gifs/random?api_key=dc6zaTOxFJmzC&tag=" ++ topic
+    in
+        Http.send NewGif (Http.get url decodeGifUrl)
+
+decodeGifUrl : Decode.Decoder String
+decodeGifUrl = 
+    Decode.at ["data", "image_url"] Decode.string
+      
 
 -- VIEW
 
