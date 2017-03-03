@@ -7,7 +7,7 @@ import Json.Decode as Decode
 
 main = 
     Html.program
-        { init = init
+        { init = init "house"
         , view = view
         , update = update
         , subscriptions = subscriptions
@@ -20,9 +20,9 @@ type alias Model =
     , gifUrl : String
     }
 
-init : (Model, Cmd Msg)
-init =
-    (Model "cats" "waiting.gif", Cmd.none)
+init : String -> (Model, Cmd Msg)
+init topic =
+    (Model topic "waiting.gif", getRandomGif topic)
 
 -- UPDATE
 
