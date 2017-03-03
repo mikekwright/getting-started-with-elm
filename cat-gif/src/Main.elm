@@ -1,27 +1,50 @@
 import Html exposing (..)
-import Html.Events exposing (onClick) 
+import Html.Attributes exposing (..)
+import Html.Events exposing (..) 
+import Http
+import Json.Decode as Decode
 
-type Message = Increment | Decrement 
+main = 
+    Html.program
+        { init = init
+        , view = view
+        , update = update
+        , subscriptions = subscriptions
+        }
 
-model = 0
+-- MODEL
 
-view model = 
+type alias Model = 
+    { topic : String 
+    , gifUrl : String
+    }
+
+init : (Model, Cmd Msg)
+init =
+    (Model "cats" "waiting.gif", Cmd.none)
+
+-- UPDATE
+
+type Msg = MorePlease
+
+update : Msg -> Model -> (Model, Cmd Msg)
+update msg model =
+    case msg of
+        MorePlease ->
+            (model, Cmd.none)
+
+-- VIEW
+
+view : Model -> Html Msg
+view model =
     div []
-        [ button [ onClick Decrement ] [ text "-" ]
-        , model |> toString |> text 
-        , button [ onClick Increment ] [ text "+" ]
+        [ h2 [] [ text model.topic ] 
+        , img [ src model.gifUrl ] [ ]
+        , button [ onClick MorePlease ] [ text "More Please" ]
         ]
 
-update msg model =
-    case msg of 
-        Increment -> 
-            model + 1
-        Decrement ->
-            model - 1
+-- SUBSCRIPTIONS
 
-main =
-    beginnerProgram
-     { model = model
-     , view = view 
-     , update = update 
-     }
+subscriptions : Model -> Sub Msg
+subscriptions model =
+  Sub.none
