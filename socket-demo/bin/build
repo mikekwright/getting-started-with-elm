@@ -1,0 +1,8 @@
+#!/usr/bin/env bash
+#vim :set filetype=sh:
+
+cd "$(dirname $0)"; cd ..
+
+mkdir -p build/
+
+elm-make src/Main.elm --output build/Main.js 
