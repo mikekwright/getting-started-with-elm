@@ -1,69 +1,66 @@
 import Html exposing (..)
 import Html.Attributes exposing (..)
 import Html.Events exposing (..) 
-import Http
-import Json.Decode as Decode
+import WebSocket
 
 
 main = 
     Html.program
-        { init = init "house"
+        { init = init
         , view = view
         , update = update
         , subscriptions = subscriptions
         }
 
+echoServer : String
+echoServer =
+    "wss://echo.websocket.org"
+
 -- MODEL
 
 type alias Model = 
-    { topic : String 
-    , gifUrl : String
+    { input : String
+    , messages : List String
     }
 
-init : String -> (Model, Cmd Msg)
-init topic =
-    (Model topic "waiting.gif", getRandomGif topic)
+init : (Model, Cmd Msg)
+init =
+    (Model "" [], Cmd.none)
 
 -- UPDATE
 
 type Msg 
-    = MorePlease
-    | NewGif (Result Http.Error String)
+    = Input String
+    | Send
+    | NewMessage String
 
 update : Msg -> Model -> (Model, Cmd Msg)
-update msg model =
+update msg {input, messages} =
     case msg of
-        MorePlease ->
-            (model, getRandomGif model.topic)
-        NewGif (Ok newUrl) ->
-            ( { model | gifUrl = newUrl }, Cmd.none)
-        NewGif (Err _) ->
-            ( model, Cmd.none ) 
+        Input newInput ->
+            (Model newInput messages, Cmd.none)
+        Send ->
+            (Model "" messages, WebSocket.send echoServer input)
+        NewMessage str -> 
+            (Model input (str :: messages), Cmd.none)
 
-getRandomGif : String -> Cmd Msg
-getRandomGif topic = 
-    let
-        url = "https://api.giphy.com/v1/gifs/random?api_key=dc6zaTOxFJmzC&tag=" ++ topic
-    in
-        Http.send NewGif (Http.get url decodeGifUrl)
-
-decodeGifUrl : Decode.Decoder String
-decodeGifUrl = 
-    Decode.at ["data", "image_url"] Decode.string
-      
 
 -- VIEW
 
 view : Model -> Html Msg
 view model =
     div []
-        [ h2 [] [ text model.topic ] 
-        , img [ src model.gifUrl ] [ ]
-        , button [ onClick MorePlease ] [ text "More Please" ]
+        [ input [onInput Input, value model.input] []
+        , button [ onClick Send] [ text "Send" ]
+        , div [] (List.map viewMessage (List.reverse model.messages))
         ]
+
+viewMessage : String -> Html Msg
+viewMessage message =
+    div [] [ text message ]
 
 -- SUBSCRIPTIONS
 
 subscriptions : Model -> Sub Msg
 subscriptions model =
-  Sub.none
+    WebSocket.listen echoServer NewMessage
